@@ -1,14 +1,25 @@
 name: Build APK
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Build with Buildozer
-        uses: ArtemSerebrennikov/buildozer-action@v1
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v3
         with:
-          command: buildozer -v android debug
+          path: .buildozer_global
+          key: buildozer-global-${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+
+      - uses: konradpabjan/buildozer-action@v1
+        with:
           buildozer_version: master
+          command: buildozer -v android debug
